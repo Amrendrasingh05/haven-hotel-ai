@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
   styleUrl: './admin-login.scss'
 })
 export class AdminLogin {
-  private readonly apiUrl = 'http://localhost:5131/api';
+  private readonly apiUrl = 'https://haven-hotel-api.onrender.com/api';
 
   username = 'admin';
   password = '';

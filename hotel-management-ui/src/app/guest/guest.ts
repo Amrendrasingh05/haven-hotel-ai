@@ -62,7 +62,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
   styleUrl: './guest.scss'
 })
 export class Guest implements OnInit, OnDestroy {
-  private readonly apiUrl = 'http://localhost:5131/api';
+  private readonly apiUrl = 'https://haven-hotel-api.onrender.com/api';
 
   // Guest login
   reservationId: number | null = null;

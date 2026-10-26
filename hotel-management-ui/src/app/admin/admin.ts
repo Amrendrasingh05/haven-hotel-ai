@@ -98,7 +98,7 @@ interface AiChatMessage {
   styleUrl: './admin.scss'
 })
 export class Admin implements OnInit {
-  private readonly apiUrl = 'http://localhost:5131/api';
+  private readonly apiUrl = 'https://haven-hotel-api.onrender.com/api';
 
   // ---------------- ADMIN AUTHENTICATION ----------------
 

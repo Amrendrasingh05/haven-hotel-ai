@@ -18,7 +18,7 @@ export const adminAuthGuard: CanActivateFn = () => {
   }
 
   return http.get<unknown>(
-    'http://localhost:5131/api/service-requests',
+    'https://haven-hotel-api.onrender.com/api/service-requests',
     {
       headers: {
         'X-Admin-Session': token
