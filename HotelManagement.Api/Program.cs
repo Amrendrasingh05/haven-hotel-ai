@@ -12,16 +12,22 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<HotelDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddCors(options =>
 {
+    var allowedOrigins = new[]
+    {
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "https://haven-hotel.pages.dev"
+    };
+
     options.AddPolicy("AngularDev", policy =>
-        policy.WithOrigins(
-                "http://localhost:4200",
-                "http://127.0.0.1:4200"
-            )
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
+
 
 builder.Services.AddHttpClient("Ollama", client =>
 {
