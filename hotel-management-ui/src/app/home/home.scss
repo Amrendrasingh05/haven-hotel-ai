@@ -1,0 +1,73 @@
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #f5f7fb;
+  font-family: Arial, sans-serif;
+}
+
+.welcome-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 48px 24px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.welcome-card h1 {
+  margin: 0 0 36px;
+  color: #17365d;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.landing-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.landing-buttons button {
+  min-width: 140px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 8px;
+  background: #17365d;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.landing-buttons button:hover {
+  background: #24558d;
+}
+
+.landing-buttons button:focus-visible {
+  outline: 3px solid #80b7ff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 420px) {
+  .landing-buttons {
+    flex-direction: column;
+  }
+
+  .landing-buttons button {
+    width: 100%;
+  }
+}

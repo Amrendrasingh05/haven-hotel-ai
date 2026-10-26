@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.angular/
+**/appsettings.Development.json
+.env
+.env.*
+!.env.example
+**/secrets.json
+.vscode/
+.idea/
+.DS_Store
+*.log

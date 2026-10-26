@@ -1,0 +1,42 @@
+
+<div class="login-page">
+  <form class="login-card" (ngSubmit)="login()">
+    <div class="brand-mark">H</div>
+
+    <p class="eyebrow">HAVEN HOTEL</p>
+    <h1>Admin sign in</h1>
+    <p class="subtitle">Sign in to manage hotel operations.</p>
+
+    <label for="username">Username</label>
+    <input
+      id="username"
+      name="username"
+      type="text"
+      [(ngModel)]="username"
+      autocomplete="username"
+      required
+    />
+
+    <label for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      type="password"
+      [(ngModel)]="password"
+      autocomplete="current-password"
+      required
+    />
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Signing in...' : 'Sign in securely' }}
+    </button>
+
+    <a routerLink="/guest" class="guest-link">
+      Continue as a hotel guest
+    </a>
+  </form>
+</div>

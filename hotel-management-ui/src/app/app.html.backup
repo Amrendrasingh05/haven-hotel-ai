@@ -1,0 +1,885 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">H</div>
+      <div>
+        <h2>Haven</h2>
+        <span>HOTEL MANAGEMENT</span>
+      </div>
+    </div>
+
+    <p class="nav-heading">MAIN MENU</p>
+    <a class="nav-item active" href="#dashboard">▦ &nbsp; Dashboard</a>
+    <a class="nav-item" href="#reservations">▣ &nbsp; Reservations</a>
+    <a class="nav-item" href="#rooms">▤ &nbsp; Rooms</a>
+    <a class="nav-item" href="#guest-management">♧ &nbsp; Guests</a>
+
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>
+      Local development
+      <small>Free &amp; self-hosted</small>
+    </div>
+  </aside>
+
+  <main class="main-content" id="dashboard">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">HOTEL OPERATIONS</p>
+        <h1>Dashboard</h1>
+      </div>
+
+      <div class="admin-profile">
+        <div class="avatar">A</div>
+        <div>
+          <strong>Administrator</strong>
+          <small>Hotel Admin</small>
+        </div>
+      </div>
+    </header>
+
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">HAVEN HOTEL</p>
+        <h2>Good day. Welcome back.</h2>
+        <p>Manage your rooms, guests and reservations in one place.</p>
+      </div>
+      <div class="welcome-mark">H</div>
+    </section>
+
+
+<!-- GUEST LOGIN PORTAL -->
+<section class="guest-portal">
+  <div class="guest-portal-card">
+    <h2>Haven Hotel</h2>
+    <p class="guest-portal-subtitle">
+      Guest Portal — Access your stay
+    </p>
+
+    <form (ngSubmit)="loginGuest()">
+      <label for="reservationId">Reservation ID</label>
+      <input
+        id="reservationId"
+        name="reservationId"
+        type="number"
+        [(ngModel)]="guestLoginReservationId"
+        placeholder="Enter reservation ID"
+        required
+        min="1"
+      />
+
+      <label for="roomNumber">Room Number</label>
+      <input
+        id="roomNumber"
+        name="roomNumber"
+        type="text"
+        [(ngModel)]="guestLoginRoomNumber"
+        placeholder="Enter room number"
+        required
+      />
+
+      <label for="guestPhone">Registered Phone Number</label>
+      <input
+        id="guestPhone"
+        name="guestPhone"
+        type="tel"
+        [(ngModel)]="guestLoginPhone"
+        placeholder="Enter registered phone number"
+        required
+      />
+
+      <p *ngIf="guestLoginError" class="guest-error">
+        {{ guestLoginError }}
+      </p>
+
+      <p *ngIf="guestLoginMessage" class="guest-success">
+        {{ guestLoginMessage }}
+      </p>
+
+      <button type="submit" [disabled]="guestLoginLoading">
+        {{ guestLoginLoading ? 'Verifying...' : 'Access My Stay' }}
+      </button>
+    </form>
+
+    <div *ngIf="guestPortal" class="guest-welcome">
+      <h3>Welcome, {{ guestPortal.guestName }}!</h3>
+      <p>Room: {{ guestPortal.roomNumber }}</p>
+      <p>Reservation: #{{ guestPortal.reservationId }}</p>
+      <button type="button" (click)="logoutGuest()">
+        Log Out
+      </button>
+    </div>
+  </div>
+</section>
+
+
+    <!-- Dashboard statistics -->
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span>Total rooms</span>
+        <strong>{{ rooms.length }}</strong>
+        <small>Registered rooms</small>
+      </article>
+
+      <article class="stat-card">
+        <span>Total reservations</span>
+        <strong>{{ reservations.length }}</strong>
+        <small>All booking records</small>
+      </article>
+
+      <article class="stat-card">
+        <span>Available rooms</span>
+        <strong>{{ availableRoomCount }}</strong>
+        <small>For the selected dates</small>
+      </article>
+
+      <article class="stat-card">
+        <span>Confirmed bookings</span>
+        <strong>{{ confirmedReservationCount }}</strong>
+        <small>All dates included</small>
+      </article>
+    </section>
+
+    <!-- Create reservation -->
+    <section class="panel booking-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">GUEST SERVICES</p>
+          <h2>Create a reservation</h2>
+          <p>Select dates to find rooms available for the guest.</p>
+        </div>
+        <span class="panel-icon">＋</span>
+      </div>
+
+      <div *ngIf="successMessage" class="alert success">
+        {{ successMessage }}
+      </div>
+
+      <div *ngIf="errorMessage" class="alert error">
+        {{ errorMessage }}
+      </div>
+
+      <form
+        (ngSubmit)="createReservation()"
+        #reservationForm="ngForm"
+      >
+        <div class="form-grid">
+          <label class="guest-select-field">
+            Select an existing guest
+            <select
+              name="reservationGuest"
+              [ngModel]="selectedReservationGuestId"
+              (ngModelChange)="selectReservationGuest($event)"
+            >
+              <option [ngValue]="null">
+                New guest / enter details manually
+              </option>
+
+              <option
+                *ngFor="let guest of reservationGuests"
+                [ngValue]="guest.id"
+              >
+                {{ guest.fullName }} — {{ guest.phone }}
+              </option>
+            </select>
+
+            <small>
+              Select a registered guest to autofill their name and phone number.
+            </small>
+          </label>
+
+          <label>
+            Guest full name
+            <input
+              name="guestName"
+              [(ngModel)]="reservation.guestName"
+              placeholder="Enter guest name"
+              maxlength="120"
+              required
+            />
+          </label>
+
+          <label>
+            Phone number
+            <input
+              name="guestPhone"
+              [(ngModel)]="reservation.guestPhone"
+              placeholder="Enter phone number"
+              type="tel"
+              maxlength="20"
+              required
+            />
+          </label>
+
+          <label>
+            Check-in date
+            <input
+              name="checkInDate"
+              type="date"
+              [(ngModel)]="reservation.checkInDate"
+              [min]="today"
+              (ngModelChange)="checkRoomAvailability()"
+              required
+            />
+          </label>
+
+          <label>
+            Check-out date
+            <input
+              name="checkOutDate"
+              type="date"
+              [(ngModel)]="reservation.checkOutDate"
+              [min]="reservation.checkInDate || today"
+              (ngModelChange)="checkRoomAvailability()"
+              required
+            />
+          </label>
+
+          <label>
+            Available room
+            <select
+              name="roomId"
+              [(ngModel)]="reservation.roomId"
+              [disabled]="checkingAvailability || availableRooms.length === 0"
+              required
+            >
+              <option [ngValue]="0" disabled>
+                {{ checkingAvailability ? 'Checking rooms...' : 'Select an available room' }}
+              </option>
+
+              <option
+                *ngFor="let room of availableRooms"
+                [ngValue]="room.id"
+              >
+                Room {{ room.roomNumber }} — {{ room.roomType }} — ₹{{ room.pricePerNight }}/night
+              </option>
+            </select>
+
+            <small>{{ availabilityMessage }}</small>
+          </label>
+
+          <label>
+            Number of guests
+            <input
+              name="guestCount"
+              type="number"
+              [(ngModel)]="reservation.guestCount"
+              min="1"
+              [max]="selectedRoom?.capacity ?? 10"
+              required
+            />
+
+            <small *ngIf="selectedRoom">
+              Room capacity: {{ selectedRoom.capacity }} guests
+            </small>
+          </label>
+        </div>
+
+        <div class="price-summary">
+          <div>
+            <span>Length of stay</span>
+            <strong>
+              {{ totalNights }} {{ totalNights === 1 ? 'night' : 'nights' }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Price per night</span>
+            <strong>₹{{ selectedRoom?.pricePerNight ?? 0 }}</strong>
+          </div>
+
+          <div class="total-price">
+            <span>Estimated total</span>
+            <strong>₹{{ estimatedTotal }}</strong>
+          </div>
+        </div>
+
+        <button
+          class="primary-button"
+          type="submit"
+          [disabled]="
+            saving ||
+            checkingAvailability ||
+            !reservationForm.valid ||
+            !selectedRoom ||
+            totalNights < 1
+          "
+        >
+          {{ saving ? 'Creating reservation...' : 'Confirm reservation →' }}
+        </button>
+      </form>
+    </section>
+
+    <!-- Reservations -->
+    <section class="panel" id="reservations">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">BOOKING RECORDS</p>
+          <h2>Recent reservations</h2>
+          <p>Manage bookings and cancellations.</p>
+        </div>
+
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="loadReservations()"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Booking</th>
+              <th>Guest</th>
+              <th>Room</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Guests</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let item of reservations">
+              <td>#{{ item.id }}</td>
+              <td>{{ item.guestName }}</td>
+              <td>{{ item.roomNumber }}</td>
+              <td>{{ item.checkInDate }}</td>
+              <td>{{ item.checkOutDate }}</td>
+              <td>{{ item.guestCount }}</td>
+              <td>₹{{ item.totalPrice }}</td>
+
+              <td>
+                <span
+                  class="booking-status"
+                  [ngClass]="{
+                    'status-confirmed': item.status === 'Confirmed',
+                    'status-cancelled': item.status === 'Cancelled'
+                  }"
+                >
+                  {{ item.status }}
+                </span>
+              </td>
+
+              <td>
+                <button
+                  *ngIf="item.status === 'Confirmed'"
+                  class="cancel-button"
+                  type="button"
+                  (click)="cancelReservation(item.id)"
+                >
+                  Cancel
+                </button>
+
+                <span
+                  *ngIf="item.status === 'Cancelled'"
+                  class="muted-text"
+                >
+                  No action
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="!loading && reservations.length === 0">
+              <td colspan="9" class="empty-state">
+                No reservations found yet.
+              </td>
+            </tr>
+
+            <tr *ngIf="loading">
+              <td colspan="9" class="empty-state">
+                Loading reservations...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Guest Management -->
+    <section class="panel" id="guest-management">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CUSTOMER RELATIONSHIPS</p>
+          <h2>Guest Management</h2>
+          <p>Register guests, find guest records and view their profiles.</p>
+        </div>
+        <span class="panel-icon">♧</span>
+      </div>
+
+      <div *ngIf="guestMessage" class="alert success">
+        {{ guestMessage }}
+      </div>
+
+      <div *ngIf="guestError" class="alert error">
+        {{ guestError }}
+      </div>
+
+      <!-- Register guest -->
+      <div class="guest-subsection">
+        <h3>Register a new guest</h3>
+
+        <form (ngSubmit)="createGuest()" #guestForm="ngForm">
+          <div class="form-grid">
+            <label>
+              Full name *
+              <input
+                name="newGuestName"
+                [(ngModel)]="guestName"
+                placeholder="Enter full name"
+                maxlength="120"
+                required
+              />
+            </label>
+
+            <label>
+              Phone number *
+              <input
+                name="newGuestPhone"
+                [(ngModel)]="guestPhone"
+                type="tel"
+                placeholder="Enter phone number"
+                maxlength="20"
+                required
+              />
+            </label>
+
+            <label>
+              Email address
+              <input
+                name="newGuestEmail"
+                [(ngModel)]="guestEmail"
+                type="email"
+                placeholder="guest@example.com"
+                maxlength="254"
+                email
+              />
+            </label>
+          </div>
+
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="guestSaving || !guestForm.valid"
+          >
+            {{ guestSaving ? 'Registering guest...' : 'Register guest →' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Search guests -->
+      <div class="guest-subsection">
+        <div class="section-heading">
+          <div>
+            <h3>Registered guests</h3>
+            <p>Search by guest name, phone number or email address.</p>
+          </div>
+
+          <button
+            class="secondary-button"
+            type="button"
+            (click)="loadGuests()"
+            [disabled]="guestLoading"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <form class="guest-search-form" (ngSubmit)="searchGuests()">
+          <input
+            name="guestSearch"
+            [(ngModel)]="guestSearch"
+            placeholder="Search guests..."
+            aria-label="Search guests by name, phone, or email"
+          />
+
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="guestLoading"
+          >
+            Search
+          </button>
+
+          <button
+            class="secondary-button"
+            type="button"
+            (click)="guestSearch = ''; loadGuests()"
+          >
+            Clear
+          </button>
+        </form>
+
+        <p *ngIf="guestLoading" class="empty-state">
+          Loading guests...
+        </p>
+
+        <div class="table-wrap" *ngIf="!guestLoading">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Guest name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Reservations</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let guest of guests">
+                <td>#{{ guest.id }}</td>
+                <td>{{ guest.fullName }}</td>
+                <td>{{ guest.phone }}</td>
+                <td>{{ guest.email || '—' }}</td>
+                <td>{{ guest.reservationCount }}</td>
+
+                <td>
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    (click)="viewGuest(guest.id)"
+                  >
+                    View details
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="guests.length === 0">
+                <td colspan="6" class="empty-state">
+                  No guests found. Register a guest or try another search.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Guest profile and reservation history -->
+      <div class="guest-subsection" *ngIf="guestDetailsLoading">
+        <p class="empty-state">Loading guest details...</p>
+      </div>
+
+      <div
+        class="guest-subsection"
+        *ngIf="selectedGuest as guest"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">GUEST PROFILE</p>
+            <h3>{{ guest.fullName }}</h3>
+            <p>Guest ID: #{{ guest.id }}</p>
+          </div>
+
+          <button
+            class="secondary-button"
+            type="button"
+            (click)="closeGuestDetails()"
+          >
+            Close
+          </button>
+        </div>
+
+        <div class="guest-profile-grid">
+          <div>
+            <span>Phone number</span>
+            <strong>{{ guest.phone }}</strong>
+          </div>
+
+          <div>
+            <span>Email address</span>
+            <strong>{{ guest.email || 'Not provided' }}</strong>
+          </div>
+
+          <div>
+            <span>Registered</span>
+            <strong>{{ guest.createdAtUtc | date:'mediumDate' }}</strong>
+          </div>
+        </div>
+
+        <h3>Reservation history</h3>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Booking</th>
+                <th>Room</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Guests</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let booking of guest.reservations">
+                <td>#{{ booking.id }}</td>
+                <td>{{ booking.roomNumber }}</td>
+                <td>{{ booking.checkInDate }}</td>
+                <td>{{ booking.checkOutDate }}</td>
+                <td>{{ booking.guestCount }}</td>
+                <td>₹{{ booking.totalPrice }}</td>
+
+                <td>
+                  <span
+                    class="booking-status"
+                    [ngClass]="{
+                      'status-confirmed': booking.status === 'Confirmed',
+                      'status-cancelled': booking.status === 'Cancelled'
+                    }"
+                  >
+                    {{ booking.status }}
+                  </span>
+                </td>
+              </tr>
+
+              <tr *ngIf="guest.reservations.length === 0">
+                <td colspan="7" class="empty-state">
+                  No linked reservation history is available for this guest yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Service Requests -->
+    
+<!-- SERVICE REQUESTS DASHBOARD -->
+<section class="service-requests-section">
+  <div class="service-requests-header">
+    <div>
+      <h2>Guest Service Requests</h2>
+      <p>Track guest issues and manage department assignments.</p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="loadServiceRequests()"
+    >
+      Refresh
+    </button>
+  </div>
+
+  <div class="service-request-filters">
+    <label>
+      Department
+      <select
+        [(ngModel)]="serviceRequestDepartment"
+        (ngModelChange)="loadServiceRequests()"
+      >
+        <option value="">All Departments</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Housekeeping">Housekeeping</option>
+        <option value="IT">IT</option>
+        <option value="Room Service">Room Service</option>
+        <option value="Accounts">Accounts</option>
+        <option value="Security">Security</option>
+        <option value="Duty Manager">Duty Manager</option>
+        <option value="Front Desk">Front Desk</option>
+      </select>
+    </label>
+
+    <label>
+      Status
+      <select
+        [(ngModel)]="serviceRequestStatus"
+        (ngModelChange)="loadServiceRequests()"
+      >
+        <option value="">All Statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+    </label>
+  </div>
+
+  <p *ngIf="serviceRequestLoading">
+    Loading service requests...
+  </p>
+
+  <div
+    class="service-request-empty"
+    *ngIf="!serviceRequestLoading && serviceRequests.length === 0"
+  >
+    No service requests found for these filters.
+  </div>
+
+  <div
+    class="service-request-table-wrapper"
+    *ngIf="!serviceRequestLoading && serviceRequests.length > 0"
+  >
+    <table class="service-request-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Guest</th>
+          <th>Room</th>
+          <th>Issue</th>
+          <th>Department</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Update Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let request of serviceRequests">
+          <td>#{{ request.id }}</td>
+          <td>{{ request.guestName }}</td>
+          <td>{{ request.roomNumber }}</td>
+          <td class="service-request-description">
+            {{ request.description }}
+          </td>
+          <td>{{ request.department }}</td>
+          <td>
+            <span
+              class="request-priority"
+              [class.high-priority]="request.priority === 'High'"
+            >
+              {{ request.priority }}
+            </span>
+          </td>
+          <td>
+            <span
+              class="request-status"
+              [class.status-open]="request.status === 'Open'"
+              [class.status-progress]="request.status === 'In Progress'"
+              [class.status-resolved]="request.status === 'Resolved'"
+              [class.status-cancelled]="request.status === 'Cancelled'"
+            >
+              {{ request.status }}
+            </span>
+          </td>
+          <td>
+            <select
+              [ngModel]="request.status"
+              (ngModelChange)="updateServiceRequestStatus(request.id, $event)"
+              [name]="'requestStatus' + request.id"
+              [disabled]="request.status === 'Cancelled'"
+            >
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!--Ai Chat-->
+
+<!-- HAVEN AI ASSISTANT -->
+<section class="haven-ai-section">
+  <div class="haven-ai-header">
+    <div class="haven-ai-avatar">✦</div>
+
+    <div>
+      <h2>Haven AI Assistant</h2>
+      <p>Powered by local AI · Gemma 4</p>
+    </div>
+
+    <span class="haven-ai-online">Local AI</span>
+  </div>
+
+  <div class="haven-ai-messages">
+    <div
+      *ngFor="let message of aiMessages"
+      class="haven-ai-message"
+      [class.haven-ai-user]="message.role === 'user'"
+      [class.haven-ai-bot]="message.role === 'assistant'"
+    >
+      <div class="haven-ai-message-content">
+        {{ message.content }}
+      </div>
+    </div>
+
+    <div
+      *ngIf="aiLoading"
+      class="haven-ai-message haven-ai-bot"
+    >
+      <div class="haven-ai-message-content">
+        AI is thinking...
+      </div>
+    </div>
+  </div>
+
+  <p class="haven-ai-error" *ngIf="aiError">
+    {{ aiError }}
+  </p>
+
+  <form
+    class="haven-ai-form"
+    (ngSubmit)="sendAiMessage()"
+  >
+    <input
+      type="text"
+      name="aiUserMessage"
+      [(ngModel)]="aiUserMessage"
+      placeholder="Ask Haven AI anything..."
+      maxlength="2000"
+      [disabled]="aiLoading"
+      autocomplete="off"
+    />
+
+    <button
+      type="submit"
+      [disabled]="aiLoading || !aiUserMessage.trim()"
+    >
+      {{ aiLoading ? 'Thinking...' : 'Send' }}
+    </button>
+  </form>
+
+  <p class="haven-ai-note">
+    Haven AI currently answers questions only.
+    Reservations and service requests require confirmation through
+    the hotel management system.
+  </p>
+</section>
+
+
+
+    <!-- Room inventory -->
+    <section class="panel" id="rooms">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">ROOM INVENTORY</p>
+          <h2>Registered rooms</h2>
+        </div>
+      </div>
+
+      <div class="room-grid">
+        <article class="room-card" *ngFor="let room of rooms">
+          <div class="room-top">
+            <span class="room-number">ROOM {{ room.roomNumber }}</span>
+            <span class="room-status">{{ room.status }}</span>
+          </div>
+
+          <h3>{{ room.roomType }}</h3>
+          <p>Capacity: {{ room.capacity }} guests</p>
+
+          <strong>
+            ₹{{ room.pricePerNight }} <small>/ night</small>
+          </strong>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      Haven Hotel Management · Local development environment
+    </footer>
+  </main>
+</div>

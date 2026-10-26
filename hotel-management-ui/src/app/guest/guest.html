@@ -1,0 +1,247 @@
+<div class="guest-page">
+  <header class="guest-header">
+    <div class="brand-mark">H</div>
+    <div>
+      <h1>Haven Hotel</h1>
+      <p>YOUR STAY, MADE SIMPLE</p>
+    </div>
+  </header>
+
+  <main class="guest-card">
+    <!-- Guest Login -->
+    <ng-container *ngIf="!guest; else welcome">
+      <div class="welcome-icon">H</div>
+      <p class="eyebrow">WELCOME TO HAVEN</p>
+      <h2>Guest Portal</h2>
+      <p class="subtitle">
+        Verify your reservation to access your personal guest portal.
+      </p>
+
+      <form (ngSubmit)="login()">
+        <label for="reservationId">Reservation ID</label>
+        <input id="reservationId" type="number" name="reservationId" [(ngModel)]="reservationId" min="1" required
+          placeholder="e.g. 4" />
+
+        <label for="roomNumber">Room number</label>
+        <input id="roomNumber" type="text" name="roomNumber" [(ngModel)]="roomNumber" required placeholder="e.g. 101" />
+
+        <label for="phone">Registered phone number</label>
+        <input id="phone" type="tel" name="phone" [(ngModel)]="phone" required autocomplete="tel"
+          placeholder="Enter your booking phone number" />
+
+        <p class="error" *ngIf="error">{{ error }}</p>
+        <p class="success" *ngIf="message">{{ message }}</p>
+
+        <button type="submit" [disabled]="loading">
+          {{ loading ? 'Verifying...' : 'Verify & Continue' }}
+        </button>
+      </form>
+
+      <p class="security-note">
+        Use the reservation details and phone number registered with your booking.
+      </p>
+    </ng-container>
+
+    <!-- Logged-in Guest Portal -->
+    <ng-template #welcome>
+      <p class="eyebrow">YOUR HAVEN STAY</p>
+      <h2>Welcome, {{ guest?.guestName }}!</h2>
+      <p class="subtitle">
+        Your reservation has been verified. How can we make your stay better?
+      </p>
+
+      <div class="reservation-summary">
+        <div>
+          <span>Room</span>
+          <strong>{{ guest?.roomNumber }}</strong>
+        </div>
+        <div>
+          <span>Reservation</span>
+          <strong>#{{ guest?.reservationId }}</strong>
+        </div>
+      </div>
+
+      <p class="success" *ngIf="message">{{ message }}</p>
+
+      <!-- AI Chat -->
+      <section class="ai-chat-section">
+        <div class="chat-heading">
+          <div>
+            <p class="eyebrow">HAVEN AI ASSISTANT</p>
+            <h3>How can I help you today?</h3>
+          </div>
+          <span class="ai-status">Local AI</span>
+        </div>
+
+        <p class="service-intro">
+          Tell me what's happening in your room. I'll help understand the
+          problem and prepare a service ticket for your approval.
+        </p>
+
+        <div class="chat-window" aria-live="polite">
+          <div class="chat-empty" *ngIf="chatMessages.length === 0">
+            <div class="chat-avatar">H</div>
+            <p>
+              Hello! I'm your Haven Hotel assistant. Is there anything
+              I can help you with during your stay?
+            </p>
+          </div>
+
+          <div *ngFor="let chatMessage of chatMessages" class="chat-message"
+            [ngClass]="chatMessage.role === 'user' ? 'guest-message' : 'assistant-message'">
+            <span class="message-sender">
+              {{ chatMessage.role === 'user' ? 'You' : 'Haven Assistant' }}
+            </span>
+            <p>{{ chatMessage.content }}</p>
+          </div>
+
+          <div class="chat-message assistant-message" *ngIf="chatLoading">
+            <span class="message-sender">Haven Assistant</span>
+            <p class="typing-indicator">Thinking…</p>
+          </div>
+        </div>
+
+        <form class="chat-composer" (ngSubmit)="sendChatMessage()">
+          <label for="chatInput">Your message</label>
+          <textarea id="chatInput" name="chatInput" [(ngModel)]="chatInput" rows="2" maxlength="2000" required
+            [disabled]="chatLoading" placeholder="For example: The AC in my room isn't cooling."></textarea>
+
+          <p class="error" *ngIf="chatError">{{ chatError }}</p>
+
+          <div class="chat-actions">
+            <button type="submit" [disabled]="chatLoading || !chatInput.trim()">
+              {{ chatLoading ? 'Thinking...' : 'Send message' }}
+            </button>
+
+            <button type="button" class="secondary-button" (click)="startNewChat()"
+              [disabled]="chatLoading || ticketLoading || chatMessages.length === 0">
+              New chat
+            </button>
+          </div>
+        </form>
+
+        <div class="voice-controls">
+          <label for="voiceLanguage">Speech language</label>
+
+          <select id="voiceLanguage" name="voiceLanguage" [ngModel]="voiceLanguage"
+            (ngModelChange)="voiceLanguage = $event">
+            <option value="en-IN">English (India)</option>
+            <option value="hi-IN">Hindi</option>
+          </select>
+
+          <div class="chat-actions">
+            <button type="button" (click)="toggleListening()" [disabled]="chatLoading || !voiceSupported">
+              {{ isListening ? 'Stop microphone' : '🎙️ Speak to Haven' }}
+            </button>
+
+            <button type="button" class="secondary-button" (click)="toggleAutoSpeak()">
+              {{ autoSpeak ? 'Disable spoken replies' : 'Enable spoken replies' }}
+            </button>
+
+            <button type="button" class="secondary-button" (click)="stopSpeaking()" [disabled]="!isSpeaking">
+              Stop speaking
+            </button>
+          </div>
+
+          <p class="voice-status" *ngIf="voiceMessage" aria-live="polite">
+            {{ voiceMessage }}
+          </p>
+
+          <p class="voice-help" *ngIf="!voiceSupported">
+            Speech recognition is not supported in this browser. You can still type
+            messages and enable spoken responses if your browser supports them.
+          </p>
+        </div>
+
+        <form class="chat-composer" (ngSubmit)="sendChatMessage()"></form>
+
+        <div class="ticket-preparation" *ngIf="chatMessages.length > 0">
+          <p>
+            Ready to report this issue? Prepare a ticket and review its
+            description before submitting it to the hotel team.
+          </p>
+
+          <button type="button" class="prepare-ticket-button" (click)="prepareTicket()"
+            [disabled]="chatLoading || ticketLoading">
+            Prepare service ticket
+          </button>
+        </div>
+
+        <!-- Guest must review and explicitly confirm -->
+        <div class="ticket-confirmation" *ngIf="showTicketConfirmation">
+          <h4>Review your service ticket</h4>
+          <p>
+            Check the description below. Your ticket will only be submitted
+            when you select “Confirm & Create Ticket”.
+          </p>
+
+          <label for="ticketDescription">Issue description</label>
+          <textarea id="ticketDescription" name="ticketDescription" [(ngModel)]="ticketDescription" maxlength="500"
+            rows="4" required></textarea>
+
+          <p class="character-count">
+            {{ ticketDescription.length }}/500 characters
+          </p>
+
+          <p class="error" *ngIf="ticketError">{{ ticketError }}</p>
+
+          <div class="chat-actions">
+            <button type="button" (click)="confirmTicket()" [disabled]="ticketLoading || !ticketDescription.trim()">
+              {{ ticketLoading ? 'Creating ticket...' : 'Confirm & Create Ticket' }}
+            </button>
+
+            <button type="button" class="secondary-button" (click)="cancelTicketConfirmation()"
+              [disabled]="ticketLoading">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <p class="success" *ngIf="ticketMessage">{{ ticketMessage }}</p>
+        <p class="error" *ngIf="ticketError && !showTicketConfirmation">
+          {{ ticketError }}
+        </p>
+      </section>
+
+      <!-- Existing Manual Service Request Form -->
+      <section class="service-section">
+        <p class="eyebrow">GUEST SERVICES</p>
+        <h3>Submit a request directly</h3>
+        <p class="service-intro">
+          Prefer not to use chat? Describe your request here instead.
+        </p>
+
+        <form (ngSubmit)="submitServiceRequest()">
+          <label for="serviceCategory">Request category</label>
+          <select id="serviceCategory" name="serviceCategory" [(ngModel)]="serviceCategory" required>
+            <option value="General">General request</option>
+            <option value="IT">Wi-Fi / TV issue</option>
+            <option value="Maintenance">AC / lights / plumbing</option>
+            <option value="Housekeeping">Room cleaning / towels</option>
+          </select>
+
+          <label for="serviceDescription">Describe your request</label>
+          <textarea id="serviceDescription" name="serviceDescription" [(ngModel)]="serviceDescription" maxlength="500"
+            rows="4" required placeholder="For example: The Wi-Fi is not connecting in my room."></textarea>
+
+          <p class="character-count">
+            {{ serviceDescription.length }}/500 characters
+          </p>
+
+          <p class="error" *ngIf="serviceError">{{ serviceError }}</p>
+          <p class="success" *ngIf="serviceMessage">{{ serviceMessage }}</p>
+
+          <button type="submit" [disabled]="serviceLoading">
+            {{ serviceLoading ? 'Submitting...' : 'Submit Service Request' }}
+          </button>
+        </form>
+      </section>
+
+      <button type="button" class="logout-button" (click)="logout()">
+        Log out
+      </button>
+    </ng-template>
+  </main>
+
+  <footer>HAVEN HOTEL · GUEST SERVICES</footer>
+</div>
